@@ -248,7 +248,7 @@ namespace Pong
         //    othery += aiyvel;
         //}
 
-        private void DoAdvancedAI(double smooth = 20,double iters = 1)
+        private void DoAdvancedAI(double smooth = 50,double iters = 1)
         {
             ailines.Clear();
 
