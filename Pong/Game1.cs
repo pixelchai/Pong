@@ -1,8 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended.Input.InputListeners;
+using MonoGame.Extended.NuclexGui;
+using MonoGame.Extended.NuclexGui.Controls;
+using MonoGame.Extended.NuclexGui.Controls.Desktop;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Pong
 {
@@ -42,10 +47,19 @@ namespace Pong
 
         private Texture2D plain;
 
+        private readonly InputListenerComponent _inputManager;
+        private readonly GuiManager _gui;
+
+        private bool uiDismissed = false;
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+            IsMouseVisible = true;
+
+            _inputManager = new InputListenerComponent(this);
+            _gui = new GuiManager(Services, new GuiInputService(_inputManager));
         }
 
         /// <summary>
@@ -58,6 +72,77 @@ namespace Pong
         {
             base.Initialize();
             ResetBallPos();
+
+            _gui.Screen = new GuiScreen(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+            _gui.Screen.Desktop.Bounds = new UniRectangle(UniScalar.Zero, UniScalar.Zero, new UniScalar(1f, 0), new UniScalar(1f, 0));
+            _gui.Initialize();
+
+            var window = new GuiWindowControl
+            {
+                Name = "window",
+                Bounds = new UniRectangle(new UniVector(new UniScalar(0), new UniScalar(0)), new UniVector(new UniScalar(_gui.Screen.Width), new UniScalar(_gui.Screen.Height))),
+                Title = "Options",
+                EnableDragging = false,
+            };
+
+            float choiced = 25f;
+            window.Children.Add(new GuiOptionControl()
+            {
+                Name = "c_control",
+                Text = "User can control",
+                Selected = false,
+                Bounds = new UniRectangle(new UniScalar(0, 50), new UniScalar(1 / 5f, 0), new UniScalar(choiced), new UniScalar(choiced)),
+            });
+            window.Children.Add(new GuiOptionControl()
+            {
+                Name = "c_traj",
+                Text = "Draw trajectories",
+                Selected = true,
+                Bounds = new UniRectangle(new UniScalar(0, 50), new UniScalar(1 / 5f, 50), new UniScalar(choiced), new UniScalar(choiced)),
+            });
+            window.Children.Add(new GuiOptionControl()
+            {
+                Name = "c_drag",
+                Text = "Drag to move ball",
+                Selected = true,
+                Bounds = new UniRectangle(new UniScalar(0, 50), new UniScalar(1 / 5f, 100), new UniScalar(choiced), new UniScalar(choiced)),
+            });
+            //window.Children.Add(new MonoGame.Extended.NuclkexGui.Controls.Desktop.)
+
+            var okbutton = new GuiButtonControl
+            {
+                Name = "okbutton",
+                Bounds = new UniRectangle(new UniScalar(0, 50), new UniScalar(1, -100), new UniScalar(100), new UniScalar(40)),
+                Text = "OK",
+            };
+            okbutton.Pressed += (object sender, EventArgs e) =>
+            {
+                Debug.WriteLine("REERPERES");
+                foreach(GuiControl control in window.Children)
+                {
+                    if (control is GuiOptionControl)
+                    {
+                        bool val = ((GuiOptionControl)control).Selected;
+                        switch (control.Name)
+                        {
+                            case "c_traj":
+                                this.drawTraj = val;
+                                break;
+                            case "c_drag":
+                                this.allowDrag = val;
+                                break;
+                            case "c_control":
+                                this.bothAI = !val;
+                                break;
+                        }
+                    }
+                }
+                uiDismissed = true;
+                _gui.Screen.Desktop.Children.Remove(window);
+            };
+            window.Children.Add(okbutton);
+
+            _gui.Screen.Desktop.Children.Add(window);
         }
 
         private void ResetBallPos()
@@ -99,6 +184,12 @@ namespace Pong
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            //gui stuff
+            _inputManager.Update(gameTime);
+            _gui.Update(gameTime);
+
+            if (!uiDismissed) return;
+
             //updt paddle
             if (!bothAI)
             {
@@ -107,7 +198,7 @@ namespace Pong
 
             if (allowDrag)
             {
-                if(Mouse.GetState().LeftButton == ButtonState.Pressed)
+                if (Mouse.GetState().LeftButton == ButtonState.Pressed)
                 {
                     ballpos = Mouse.GetState().Position.ToVector2();
                 }
@@ -358,6 +449,9 @@ namespace Pong
             }
 
             spriteBatch.End();
+
+            //gui
+            _gui.Draw(gameTime);
             base.Draw(gameTime);
         }
     }
