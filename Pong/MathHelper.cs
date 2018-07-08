@@ -37,6 +37,7 @@ namespace Pong
             return Add(origin,new Vector2((float)(r * Math.Cos(theta)), (float)(r * Math.Sin(theta))));
         }
 
+        #region vector operations
         public static Vector2 Add(Vector2 left, Vector2 right)
         {
             return new Vector2(left.X + right.X, left.Y + right.Y);
@@ -51,5 +52,6 @@ namespace Pong
         {
             return new Vector2(left.X * right.X, left.Y * right.Y);
         }
+        #endregion
     }
 }

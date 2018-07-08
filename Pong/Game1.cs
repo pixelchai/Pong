@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Pong
 {
@@ -13,33 +12,33 @@ namespace Pong
     public class Game1 : Game
     {
         public static Random r = new Random();
-        float usery = 0;
-        float othery = 0;
+        private float usery = 0;
+        private float othery = 0;
 
-        int paddlew = 10;
-        int paddleh = 70;
+        private int paddlew = 10;
+        private int paddleh = 70;
 
-        int balld = 10;
+        private int balld = 10;
 
-        int othersc = 0;
-        int usersc = 0;
+        private int othersc = 0;
+        private int usersc = 0;
 
-        float aiyvel = -1f;
+        private float aiyvel = -1f;
 
-        List<Tuple<Vector2, Vector2>> ailines = new List<Tuple<Vector2, Vector2>>();
+        private List<Tuple<Vector2, Vector2>> ailines = new List<Tuple<Vector2, Vector2>>();
 
         private bool drawTraj = true;
         private bool bothAI = true;
 
         private bool allowDrag = true;
 
-        Vector2 ballpos;
-        Vector2 ballvel = new Vector2(5, 5);
+        private Vector2 ballpos;
+        private Vector2 ballvel = new Vector2(5, 5);
 
-        SpriteFont font;
+        private SpriteFont font;
 
-        GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch;
+        private GraphicsDeviceManager graphics;
+        private SpriteBatch spriteBatch;
 
         private Texture2D plain;
 
@@ -47,9 +46,6 @@ namespace Pong
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-
-            //graphics.PreferredBackBufferHeight = 1000;
-            //graphics.PreferredBackBufferWidth = 1920;
         }
 
         /// <summary>
@@ -67,7 +63,6 @@ namespace Pong
         private void ResetBallPos()
         {
             ballpos = new Vector2((GraphicsDevice.Viewport.Width / 2) - (balld / 2), (GraphicsDevice.Viewport.Height / 2) - (balld / 2));
-
         }
 
         /// <summary>
@@ -163,7 +158,6 @@ namespace Pong
             }
 
             //AI
-            //DoAI();
             DoAdvancedAI();
 
             //apply vel to ball
@@ -172,81 +166,6 @@ namespace Pong
 
             base.Update(gameTime);
         }
-
-        private void DoAI()
-        {
-            //float amount = (ballpos.X/(GraphicsDevice.Viewport.Height))/3;
-            //float amount = 1;
-            //float amount = (float)Math.Pow((ballpos.X / 1), 2);
-            //float amount = 1f;
-            float dist = (float)Math.Sqrt(Math.Pow(ballpos.Y - othery + (paddleh / 2.0), 2) + Math.Pow(ballpos.X - paddlew, 2)); //actual distance
-            float amount = (float)(Math.Log10(Math.Pow(dist,1)) / 5.0f);
-            //float amount = (float)(Math.Log10(ballpos.X) / 3.0f);
-            //ballpos = new Vector2(200, 200);
-            //othery = (int)(ballpos.Y - paddlew);
-            if (ballpos.X < GraphicsDevice.Viewport.Width)
-            {
-                //time to act
-                if(ballpos.Y> (othery + paddlew/2))
-                {
-                    //aiyvel += (float)(r.Next((int)(amount/2.0*100),(int)(amount*100))/100.0);
-                    aiyvel += (float)Math.Min((ballpos.Y - (othery + paddleh / 2.0))*amount/25,2);
-                }
-                else if(ballpos.Y<(othery+paddlew/2))
-                {
-                    //aiyvel -= (float)(r.Next((int)(amount / 2.0*100), (int)(amount*100))/100.0);
-                    aiyvel-= (float)Math.Min(((othery + paddleh / 2.0)- ballpos.Y)*amount/25,2);
-                }
-            }
-
-            //apply vel
-            othery += aiyvel;
-
-            if (othery < 0)
-            {
-                othery = 0;
-                aiyvel = 1;
-            }
-            if (othery + paddleh > GraphicsDevice.Viewport.Height)
-            {
-                othery = GraphicsDevice.Viewport.Height - paddleh;
-                aiyvel = -1;
-            }
-        }
-
-        //private void DoAdvancedAI()
-        //{
-        //    ballpos = new Vector2(200, 200);
-
-        //    float midy = othery + paddleh / 2f;
-        //    float midx = paddlew;
-
-        //    float dist = (float)Math.Sqrt(Math.Pow(ballpos.Y - midy, 2) + Math.Pow(ballpos.X - midx, 2)); //actual distance
-
-        //    //float amount = 0.000005f* (float)Math.Pow(dist,2);
-        //    //float amount = (float)(Math.Tanh(0.03 * dist - 5) / 2 + 0.5);
-        //    float amount = dist/20;
-        //    if (midy > ballpos.Y)
-        //    {
-        //        //too low
-        //        float velnorm = (float)(0.1 * Math.Pow(Math.Abs(aiyvel), 2));
-        //        aiyvel += velnorm * Math.Sign(aiyvel) * -1;
-
-        //        aiyvel = 0;
-        //        aiyvel -= amount;
-        //    }else if(midy< ballpos.Y)
-        //    {
-        //        //too high
-        //        float velnorm = (float)(0.1 * Math.Pow(Math.Abs(aiyvel), 2));
-        //        aiyvel += velnorm * Math.Sign(aiyvel) * -1;
-
-        //        //aiyvel = 0;
-        //        aiyvel += amount;
-        //    }
-
-        //    //apply vel
-        //    othery += aiyvel;
-        //}
 
         private void DoAdvancedAI(double smooth = 50,double iters = 1)
         {
@@ -259,8 +178,6 @@ namespace Pong
             {
                 double theta = MathHelper.ToPol(simvel.X, simvel.Y).Item1;
 
-                //ailines.Add(new Tuple<Vector2, Vector2>(simpos, MathHelper.ToRec(simpos, theta, 1000))); //debug line
-
                 bool headingSide = false;
                 bool topbias = false;
 
@@ -271,8 +188,6 @@ namespace Pong
                     if (xtop < GraphicsDevice.Viewport.Width && xtop > 0)
                     {
                         //will hit top
-
-                        //ailines.Add(new Tuple<Vector2, Vector2>(new Vector2((float)xtop, GraphicsDevice.Viewport.Height), new Vector2((float)xtop, 0)));
                         ailines.Add(new Tuple<Vector2, Vector2>(simpos, new Vector2((float)xtop, 0)));
 
                         //updt sim
@@ -293,7 +208,6 @@ namespace Pong
                     if (xbot < GraphicsDevice.Viewport.Width && xbot > 0)
                     {
                         //will hit bot
-
                         ailines.Add(new Tuple<Vector2, Vector2>(simpos, new Vector2((float)xbot, GraphicsDevice.Viewport.Height-balld)));
 
                         //updt sim
@@ -318,8 +232,6 @@ namespace Pong
                             ailines.Add(new Tuple<Vector2, Vector2>(simpos, new Vector2(GraphicsDevice.Viewport.Width-paddlew-balld,(float)yright)));
 
                             simpos = new Vector2(GraphicsDevice.Viewport.Width-paddlew-balld, (float)yright);
-                            //break;
-
                             simvel.X *= -1;
 
                             if (bothAI)
@@ -355,7 +267,6 @@ namespace Pong
                         if (yleft < GraphicsDevice.Viewport.Height && yleft > 0)
                         {
                             ailines.Add(new Tuple<Vector2, Vector2>(simpos, new Vector2(paddlew, (float)yleft)));
-
                             simpos = new Vector2(paddlew, (float)yleft);
                             break;
                         }
@@ -376,7 +287,6 @@ namespace Pong
                         }
                     }
                 }
-
             }
 
             AIStepTo(simpos,smooth);
@@ -387,12 +297,9 @@ namespace Pong
             float midy = othery + paddleh / 2f;
             float midx = paddlew;
 
-            //float dist = (float)Math.Sqrt(Math.Pow(ballpos.Y - midy, 2) + Math.Pow(ballpos.X - midx, 2)); //actual distance
             float dist = Math.Abs(midy - target.Y);
-
-            //float amount = 0.000005f* (float)Math.Pow(dist,2);
-            //float amount = (float)(Math.Tanh(0.03 * dist - 5) / 2 + 0.5);
             float amount = (float)(smooth * (1 / (1 + Math.Pow(Math.E, -0.01 * (dist - 300)))));
+
             if (midy > target.Y)
             {
                 //too low
@@ -410,12 +317,9 @@ namespace Pong
             float midy = usery + paddleh / 2f;
             float midx = GraphicsDevice.Viewport.Width - paddlew;
 
-            //float dist = (float)Math.Sqrt(Math.Pow(ballpos.Y - midy, 2) + Math.Pow(ballpos.X - midx, 2)); //actual distance
             float dist = Math.Abs(midy - target.Y);
-
-            //float amount = 0.000005f* (float)Math.Pow(dist,2);
-            //float amount = (float)(Math.Tanh(0.03 * dist - 5) / 2 + 0.5);
             float amount = (float)(smooth * (1 / (1 + Math.Pow(Math.E, -0.01 * (dist - 300)))));
+
             if (midy > target.Y)
             {
                 //too low
@@ -428,7 +332,6 @@ namespace Pong
             }
         }
 
-        private int tickno = 0;
         /// <summary>
         /// This is called when the game should draw itself.
         /// </summary>
@@ -436,8 +339,8 @@ namespace Pong
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.Black);
-
             spriteBatch.Begin();
+
             spriteBatch.Draw(plain, new Rectangle(0, (int)othery, paddlew, paddleh), Color.White);
             spriteBatch.Draw(plain, new Rectangle(GraphicsDevice.Viewport.Width-paddlew, (int)usery, paddlew, paddleh), Color.White);
             spriteBatch.Draw(plain, new Rectangle((int)ballpos.X, (int)ballpos.Y, balld, balld),Color.White);
@@ -454,17 +357,7 @@ namespace Pong
                 }
             }
 
-            //test rectsprite
-            //Vector2 centre = new Vector2(300, 300);
-            //float radius = 50f;
-            //float speed = 0.1f;
-            //new RectSprite(GraphicsDevice, centre, new Vector2((float)(Math.Cos(tickno*speed) * radius + centre.X), (float)(Math.Sin(tickno*speed) * radius + centre.Y)))
-            //    .Draw(spriteBatch,Color.White,2);
-
-
             spriteBatch.End();
-
-            tickno += 1;
             base.Draw(gameTime);
         }
     }

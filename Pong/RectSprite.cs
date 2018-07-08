@@ -1,10 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Pong
 {
@@ -17,6 +13,7 @@ namespace Pong
         public float X2;
         public float Y2;
 
+        #region constructors
         public RectSprite(Texture2D plain, float x1, float y1, float x2, float y2)
         {
             this.plain = plain;
@@ -50,6 +47,7 @@ namespace Pong
             X2 = x2;
             Y2 = y2;
         }
+        #endregion
 
         public void Draw(SpriteBatch spriteBatch, Color color, float width)
         {
