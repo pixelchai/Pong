@@ -49,6 +49,7 @@ namespace Pong
 
         private readonly InputListenerComponent _inputManager;
         private readonly GuiManager _gui;
+        private GuiWindowControl _window;
 
         private bool uiDismissed = false;
 
@@ -77,7 +78,7 @@ namespace Pong
             _gui.Screen.Desktop.Bounds = new UniRectangle(UniScalar.Zero, UniScalar.Zero, new UniScalar(1f, 0), new UniScalar(1f, 0));
             _gui.Initialize();
 
-            var window = new GuiWindowControl
+            _window = new GuiWindowControl
             {
                 Name = "window",
                 Bounds = new UniRectangle(new UniVector(new UniScalar(0), new UniScalar(0)), new UniVector(new UniScalar(_gui.Screen.Width), new UniScalar(_gui.Screen.Height))),
@@ -86,21 +87,21 @@ namespace Pong
             };
 
             float choiced = 25f;
-            window.Children.Add(new GuiOptionControl()
+            _window.Children.Add(new GuiOptionControl()
             {
                 Name = "c_control",
                 Text = "User can control",
                 Selected = false,
                 Bounds = new UniRectangle(new UniScalar(0, 50), new UniScalar(1 / 5f, 0), new UniScalar(choiced), new UniScalar(choiced)),
             });
-            window.Children.Add(new GuiOptionControl()
+            _window.Children.Add(new GuiOptionControl()
             {
                 Name = "c_traj",
                 Text = "Draw trajectories",
                 Selected = true,
                 Bounds = new UniRectangle(new UniScalar(0, 50), new UniScalar(1 / 5f, 50), new UniScalar(choiced), new UniScalar(choiced)),
             });
-            window.Children.Add(new GuiOptionControl()
+            _window.Children.Add(new GuiOptionControl()
             {
                 Name = "c_drag",
                 Text = "Drag to move ball",
@@ -117,8 +118,7 @@ namespace Pong
             };
             okbutton.Pressed += (object sender, EventArgs e) =>
             {
-                Debug.WriteLine("REERPERES");
-                foreach(GuiControl control in window.Children)
+                foreach(GuiControl control in _window.Children)
                 {
                     if (control is GuiOptionControl)
                     {
@@ -138,11 +138,23 @@ namespace Pong
                     }
                 }
                 uiDismissed = true;
-                _gui.Screen.Desktop.Children.Remove(window);
+                _gui.Screen.Desktop.Children.Remove(_window);
             };
-            window.Children.Add(okbutton);
+            _window.Children.Add(okbutton);
 
-            _gui.Screen.Desktop.Children.Add(window);
+            var exitbutton = new GuiButtonControl
+            {
+                Name = "exitbutton",
+                Bounds = new UniRectangle(new UniScalar(1, -150), new UniScalar(1, -100), new UniScalar(100), new UniScalar(40)),
+                Text = "Exit",
+            };
+            exitbutton.Pressed += (object sender, EventArgs e) =>
+            {
+                Exit();
+            };
+            _window.Children.Add(exitbutton);
+
+            _gui.Screen.Desktop.Children.Add(_window);
         }
 
         private void ResetBallPos()
@@ -181,8 +193,14 @@ namespace Pong
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
+            if (uiDismissed)
+            {
+                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+                {
+                    uiDismissed = false;
+                    _gui.Screen.Desktop.Children.Add(_window);
+                }
+            }
 
             //gui stuff
             _inputManager.Update(gameTime);
