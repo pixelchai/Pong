@@ -450,7 +450,7 @@ namespace Pong
             {
                 foreach (Tuple<Vector2, Vector2> seg in ailines)
                 {
-                    new RectSprite(GraphicsDevice, seg.Item1, seg.Item2).Draw(spriteBatch, Color.Red, 2);
+                    new RectSprite(plain,seg.Item1, seg.Item2).Draw(spriteBatch, Color.Red, 2);
                 }
             }
 
