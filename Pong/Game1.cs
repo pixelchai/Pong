@@ -68,8 +68,8 @@ namespace Pong
 
 
             //change both to false to go fast
-            this.IsFixedTimeStep = false;
-            graphics.SynchronizeWithVerticalRetrace = false;
+            this.IsFixedTimeStep = true;
+            graphics.SynchronizeWithVerticalRetrace = true;
         }
 
         private void Window_ClientSizeChanged(object sender, EventArgs e)
