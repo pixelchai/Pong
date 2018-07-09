@@ -1,10 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended;
+using MonoGame.Extended.BitmapFonts;
+using MonoGame.Extended.Gui;
+using MonoGame.Extended.Gui.Controls;
 using MonoGame.Extended.Input.InputListeners;
-using MonoGame.Extended.NuclexGui;
-using MonoGame.Extended.NuclexGui.Controls;
-using MonoGame.Extended.NuclexGui.Controls.Desktop;
+using MonoGame.Extended.ViewportAdapters;
+using Pong.Controls;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -36,9 +39,11 @@ namespace Pong
         private bool bothAI = true;
 
         private bool allowDrag = true;
+        private bool angleRandomisation = false;
 
         private Vector2 ballpos;
-        private Vector2 ballvel = new Vector2(5, 5);
+        private Vector2 ballvel = Vector2.Zero;
+        private float ballspeed = 1f;
 
         private SpriteFont font;
 
@@ -47,11 +52,9 @@ namespace Pong
 
         private Texture2D plain;
 
-        private readonly InputListenerComponent _inputManager;
-        private readonly GuiManager _gui;
-        private GuiWindowControl _window;
-
         private bool uiDismissed = false;
+
+        private GuiSystem _gui;
 
         public Game1()
         {
@@ -59,8 +62,12 @@ namespace Pong
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
 
-            _inputManager = new InputListenerComponent(this);
-            _gui = new GuiManager(Services, new GuiInputService(_inputManager));
+            Window.ClientSizeChanged += Window_ClientSizeChanged;
+        }
+
+        private void Window_ClientSizeChanged(object sender, EventArgs e)
+        {
+            _gui.ClientSizeChanged();
         }
 
         /// <summary>
@@ -73,88 +80,6 @@ namespace Pong
         {
             base.Initialize();
             ResetBallPos();
-
-            _gui.Screen = new GuiScreen(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
-            _gui.Screen.Desktop.Bounds = new UniRectangle(UniScalar.Zero, UniScalar.Zero, new UniScalar(1f, 0), new UniScalar(1f, 0));
-            _gui.Initialize();
-
-            _window = new GuiWindowControl
-            {
-                Name = "window",
-                Bounds = new UniRectangle(new UniVector(new UniScalar(0), new UniScalar(0)), new UniVector(new UniScalar(_gui.Screen.Width), new UniScalar(_gui.Screen.Height))),
-                Title = "Options",
-                EnableDragging = false,
-            };
-
-            float choiced = 25f;
-            _window.Children.Add(new GuiOptionControl()
-            {
-                Name = "c_control",
-                Text = "User can control",
-                Selected = false,
-                Bounds = new UniRectangle(new UniScalar(0, 50), new UniScalar(1 / 5f, 0), new UniScalar(choiced), new UniScalar(choiced)),
-            });
-            _window.Children.Add(new GuiOptionControl()
-            {
-                Name = "c_traj",
-                Text = "Draw trajectories",
-                Selected = true,
-                Bounds = new UniRectangle(new UniScalar(0, 50), new UniScalar(1 / 5f, 50), new UniScalar(choiced), new UniScalar(choiced)),
-            });
-            _window.Children.Add(new GuiOptionControl()
-            {
-                Name = "c_drag",
-                Text = "Drag to move ball",
-                Selected = true,
-                Bounds = new UniRectangle(new UniScalar(0, 50), new UniScalar(1 / 5f, 100), new UniScalar(choiced), new UniScalar(choiced)),
-            });
-            //window.Children.Add(new MonoGame.Extended.NuclkexGui.Controls.Desktop.)
-
-            var okbutton = new GuiButtonControl
-            {
-                Name = "okbutton",
-                Bounds = new UniRectangle(new UniScalar(0, 50), new UniScalar(1, -100), new UniScalar(100), new UniScalar(40)),
-                Text = "OK",
-            };
-            okbutton.Pressed += (object sender, EventArgs e) =>
-            {
-                foreach(GuiControl control in _window.Children)
-                {
-                    if (control is GuiOptionControl)
-                    {
-                        bool val = ((GuiOptionControl)control).Selected;
-                        switch (control.Name)
-                        {
-                            case "c_traj":
-                                this.drawTraj = val;
-                                break;
-                            case "c_drag":
-                                this.allowDrag = val;
-                                break;
-                            case "c_control":
-                                this.bothAI = !val;
-                                break;
-                        }
-                    }
-                }
-                uiDismissed = true;
-                _gui.Screen.Desktop.Children.Remove(_window);
-            };
-            _window.Children.Add(okbutton);
-
-            var exitbutton = new GuiButtonControl
-            {
-                Name = "exitbutton",
-                Bounds = new UniRectangle(new UniScalar(1, -150), new UniScalar(1, -100), new UniScalar(100), new UniScalar(40)),
-                Text = "Exit",
-            };
-            exitbutton.Pressed += (object sender, EventArgs e) =>
-            {
-                Exit();
-            };
-            _window.Children.Add(exitbutton);
-
-            _gui.Screen.Desktop.Children.Add(_window);
         }
 
         private void ResetBallPos()
@@ -173,6 +98,142 @@ namespace Pong
             plain.SetData(new[] { Color.White });
 
             font = Content.Load<SpriteFont>("font");
+
+            Skin.CreateDefault(Content.Load<BitmapFont>("arial"));
+            _gui = new GuiSystem(new DefaultViewportAdapter(GraphicsDevice), new GuiSpriteBatchRenderer(GraphicsDevice, () => Matrix.Identity));
+
+            CheckBox c_usercontrol;
+            CheckBox c_traj;
+            CheckBox c_drag;
+            CheckBox c_resize;
+            CheckBox c_cursor;
+            CheckBox c_anglerand;
+            Button okaybutton;
+            Button exitbutton;
+            NumericalBar speedbar;
+            _gui.ActiveScreen = new Screen
+            {
+                Content = new DockPanel
+                {
+                    Items =
+                    {
+                        new DockPanel
+                        {
+                            AttachedProperties = {{DockPanel.DockProperty,Dock.Bottom}},
+                            Items =
+                            {
+                                new DockPanel
+                                {
+                                    Items =
+                                    {
+                                        (exitbutton=new Button{
+                                            Content ="Exit",
+                                            Width=100,
+                                            AttachedProperties ={{DockPanel.DockProperty, Dock.Right}}
+                                        }),
+                                        (okaybutton=new Button{
+                                            Content ="OK",
+                                        }),
+                                    }
+                                }
+                            }
+                        },
+                        new StackPanel
+                        {
+                            Spacing = 5,
+                            BackgroundColor = Color.DimGray,
+                            Items =
+                            {
+                                new Label("Options")
+                                {
+                                        Height=70,
+                                        Margin = new Thickness(10,10,10,3),
+                                },
+                                new Canvas
+                                {
+                                    Height =2,
+                                    BackgroundColor = Color.White
+                                },
+                                (c_usercontrol=new CheckBox{
+                                        Content="User can control",
+                                        Margin = new Thickness(5),
+                                        IsChecked=false,
+                                }),
+                                (c_traj=new CheckBox{
+                                        Content="Draw trajectories",
+                                        Margin = new Thickness(5),
+                                        IsChecked=true,
+                                }),
+                                (c_drag=new CheckBox{
+                                        Content="Move ball",
+                                        Margin = new Thickness(5),
+                                        IsChecked=true,
+                                }),
+                                (c_resize=new CheckBox{
+                                        Content="Resize window",
+                                        Margin = new Thickness(5),
+                                        IsChecked=false,
+                                }),
+                                (c_cursor=new CheckBox{
+                                        Content="Show cursor",
+                                        Margin = new Thickness(5),
+                                        IsChecked=true,
+                                }),
+                                (c_anglerand=new CheckBox{
+                                        Content="Angle randomisation",
+                                        Margin = new Thickness(5),
+                                        IsChecked=false,
+                                }),
+                                new DockPanel
+                                {
+                                    Items =
+                                    {
+                                        new Label("Ball speed: ")
+                                        {
+                                            AttachedProperties ={{DockPanel.DockProperty, Dock.Left}}
+                                        },
+                                        (speedbar=new NumericalBar()
+                                        {
+                                            Suffix="x",
+                                            LBound=0.1f,
+                                            UBound=8f,
+                                            DecimalPlaces=1,
+                                            Value=1f
+                                        })
+                                    }
+                                }
+                            },
+                        },
+                    }
+                }
+            };
+
+            okaybutton.Clicked += (object sender, EventArgs e) =>
+            {
+                this.bothAI = !c_usercontrol.IsChecked;
+                this.drawTraj = c_traj.IsChecked;
+                this.allowDrag = c_drag.IsChecked;
+                base.Window.AllowUserResizing = c_resize.IsChecked;
+                base.IsMouseVisible = c_cursor.IsChecked;
+                this.angleRandomisation = c_anglerand.IsChecked;
+
+                this.ballspeed = speedbar.Value;
+                if (ballvel == Vector2.Zero)
+                {
+                    ballvel = new Vector2(5 * ballspeed, 5 * ballspeed);
+                }
+                else
+                {
+                    ballvel = new Vector2(Math.Sign(ballvel.X) * 5*ballspeed, Math.Sign(ballvel.Y) * 5*ballspeed);
+                }
+
+                _gui.ActiveScreen.Hide();
+                uiDismissed = true;
+            };
+            exitbutton.Clicked += (object sender, EventArgs e) =>
+            {
+                Exit();
+            };
         }
 
         /// <summary>
@@ -193,17 +254,16 @@ namespace Pong
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            if (uiDismissed)
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             {
-                if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+                if (uiDismissed)
                 {
                     uiDismissed = false;
-                    _gui.Screen.Desktop.Children.Add(_window);
+                    _gui.ActiveScreen.Show();
                 }
             }
 
             //gui stuff
-            _inputManager.Update(gameTime);
             _gui.Update(gameTime);
 
             if (!uiDismissed) return;
@@ -233,41 +293,55 @@ namespace Pong
             }
 
             //collide with paddle
-            if(ballpos.X+balld>=(GraphicsDevice.Viewport.Width - paddlew))
+            if(ballpos.X+balld+ballvel.X>=(GraphicsDevice.Viewport.Width - paddlew))
             {
                 //ball our side
-                if((ballpos.Y > usery) && (ballpos.Y < (usery + paddleh)))
+                if ((ballpos.Y > usery) && (ballpos.Y < (usery + paddleh)))
                 {
-                    ballvel.X *= -1;
+                    if (angleRandomisation)
+                    {
+                        ballvel.X *= r.Next(-130, -80) / 100f;
+                    }
+                    else
+                    {
+                        ballvel.X *= -1;
+                    }
                 }
                 else
                 {
                     //they score
                     othersc += 1;
-                    ballvel = new Vector2(5, 5);
+                    ballvel = new Vector2(5*ballspeed, 5*ballspeed);
                     ResetBallPos();
                     return;
                 }
             }
-            else if (ballpos.X <= paddlew)
+            else if (ballpos.X+ballvel.X <= paddlew)
             {
                 //ball their side
                 if ((ballpos.Y > othery) && (ballpos.Y < (othery + paddleh)))
                 {
-                    ballvel.X *= -1;
+                    if (angleRandomisation)
+                    {
+                        ballvel.X *= r.Next(-130, -80) / 100f;
+                    }
+                    else
+                    {
+                        ballvel.X *= -1;
+                    }
                 }
                 else
                 {
                     //we score
                     usersc += 1;
-                    ballvel = new Vector2(-5, 5);
+                    ballvel = new Vector2(-5*ballspeed, 5*ballspeed);
                     ResetBallPos();
                     return;
                 }
             }
 
             //AI
-            DoAdvancedAI();
+            DoAdvancedAI(Math.Max(15.0*MathHelper.ToPol(ballvel).Item2,50));
 
             //apply vel to ball
             ballpos.X += ballvel.X;
@@ -276,11 +350,11 @@ namespace Pong
             base.Update(gameTime);
         }
 
-        private void DoAdvancedAI(double smooth = 50,double iters = 1)
+        private void DoAdvancedAI(double smooth = 60)
         {
             ailines.Clear();
 
-            Vector2 simpos = new Vector2(ballpos.X, ballpos.Y);
+            Vector2 simpos = new Vector2(ballpos.X+ballvel.X, ballpos.Y+ballvel.Y);
             Vector2 simvel = new Vector2(ballvel.X, ballvel.Y);
 
             while (true)
@@ -355,11 +429,11 @@ namespace Pong
                             if (!topbias)
                             {
                                 //top right
-                                simsimpos = new Vector2(GraphicsDevice.Viewport.Width - paddlew - balld, 0);
+                                simsimpos = new Vector2(GraphicsDevice.Viewport.Width - paddlew - balld, paddleh/2);
                             }
                             else
                             {
-                                simsimpos = new Vector2(GraphicsDevice.Viewport.Width - paddlew - balld, GraphicsDevice.Viewport.Height);
+                                simsimpos = new Vector2(GraphicsDevice.Viewport.Width - paddlew - balld, GraphicsDevice.Viewport.Height-paddleh/2);
 
                             }
                             if (bothAI)
@@ -385,11 +459,11 @@ namespace Pong
                             if (!topbias)
                             {
                                 //top left
-                                simpos = new Vector2(paddlew, 0);
+                                simpos = new Vector2(paddlew, paddleh/2);
                             }
                             else
                             {
-                                simpos = new Vector2(paddlew, GraphicsDevice.Viewport.Height);
+                                simpos = new Vector2(paddlew, GraphicsDevice.Viewport.Height-paddleh/2);
 
                             }
                             break;

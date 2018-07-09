@@ -27,6 +27,11 @@ namespace Pong
             return new Tuple<double, double>(theta, r);
         }
 
+        public static Tuple<double,double> ToPol(Vector2 vec)
+        {
+            return ToPol(vec.X, vec.Y);
+        }
+
         public static Vector2 ToRec(double theta, double r)
         {
             return new Vector2((float)(r * Math.Cos(theta)), (float)(r * Math.Sin(theta)));
