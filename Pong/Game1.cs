@@ -102,6 +102,7 @@ namespace Pong
             Skin.CreateDefault(Content.Load<BitmapFont>("arial"));
             _gui = new GuiSystem(new DefaultViewportAdapter(GraphicsDevice), new GuiSpriteBatchRenderer(GraphicsDevice, () => Matrix.Identity));
 
+            SDockPanel sDockPanel;
             CheckBox c_usercontrol;
             CheckBox c_traj;
             CheckBox c_drag;
@@ -111,9 +112,10 @@ namespace Pong
             Button okaybutton;
             Button exitbutton;
             NumericalBar speedbar;
+            Label warninglabel;
             _gui.ActiveScreen = new Screen
             {
-                Content = new DockPanel
+                Content = sDockPanel = new SDockPanel
                 {
                     Items =
                     {
@@ -201,13 +203,28 @@ namespace Pong
                                             Value=1f
                                         })
                                     }
-                                }
+                                },
+                                (warninglabel=new Label("NB: AI performance may be reduced with the current options")
+                                {
+                                    TextColor = Color.Transparent,
+                                }),
                             },
                         },
                     }
                 }
             };
 
+            sDockPanel.OnPointerMoveEvent += (object sender, EventArgs e) =>
+            {
+                if (c_anglerand.IsChecked || speedbar.Value > 3.09)
+                {
+                    warninglabel.TextColor = Color.PaleVioletRed;
+                }
+                else
+                {
+                    warninglabel.TextColor = Color.Transparent;
+                }
+            };
             okaybutton.Clicked += (object sender, EventArgs e) =>
             {
                 this.bothAI = !c_usercontrol.IsChecked;

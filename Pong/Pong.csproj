@@ -42,6 +42,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Controls\NumericalBar.cs" />
+    <Compile Include="Controls\SDockPanel.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="MathHelper.cs" />
     <Compile Include="Program.cs" />
