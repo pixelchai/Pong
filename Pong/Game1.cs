@@ -65,6 +65,11 @@ namespace Pong
             IsMouseVisible = true;
 
             Window.ClientSizeChanged += Window_ClientSizeChanged;
+
+
+            //change both to false to go fast
+            this.IsFixedTimeStep = false;
+            graphics.SynchronizeWithVerticalRetrace = false;
         }
 
         private void Window_ClientSizeChanged(object sender, EventArgs e)
@@ -114,6 +119,7 @@ namespace Pong
             Button okaybutton;
             Button exitbutton;
             NumericalBar speedbar;
+            NumericalBar gspeedbar;
             NumericalBar trailbar;
             Label warninglabel;
             _gui.ActiveScreen = new Screen
@@ -161,32 +167,32 @@ namespace Pong
                                 },
                                 (c_usercontrol=new CheckBox{
                                         Content="User can control",
-                                        Margin = new Thickness(5),
+                                        Margin = new Thickness(1),
                                         IsChecked=false,
                                 }),
                                 (c_traj=new CheckBox{
                                         Content="Draw trajectories",
-                                        Margin = new Thickness(5),
+                                        Margin = new Thickness(1),
                                         IsChecked=true,
                                 }),
                                 (c_drag=new CheckBox{
                                         Content="Move ball",
-                                        Margin = new Thickness(5),
+                                        Margin = new Thickness(1),
                                         IsChecked=true,
                                 }),
                                 (c_resize=new CheckBox{
                                         Content="Resize window",
-                                        Margin = new Thickness(5),
+                                        Margin = new Thickness(1),
                                         IsChecked=false,
                                 }),
                                 (c_cursor=new CheckBox{
                                         Content="Show cursor",
-                                        Margin = new Thickness(5),
+                                        Margin = new Thickness(1),
                                         IsChecked=true,
                                 }),
                                 (c_anglerand=new CheckBox{
                                         Content="Angle randomisation",
-                                        Margin = new Thickness(5),
+                                        Margin = new Thickness(1),
                                         IsChecked=false,
                                 }),
                                 new DockPanel
@@ -207,6 +213,24 @@ namespace Pong
                                         })
                                     }
                                 },
+                                //new DockPanel
+                                //{
+                                //    Items =
+                                //    {
+                                //        new Label("Game speed: ")
+                                //        {
+                                //            AttachedProperties ={{DockPanel.DockProperty, Dock.Left}}
+                                //        },
+                                //        (gspeedbar=new NumericalBar()
+                                //        {
+                                //            Suffix="fps",
+                                //            LBound=10,
+                                //            UBound=500f,
+                                //            DecimalPlaces=0,
+                                //            Value=60f
+                                //        })
+                                //    }
+                                //},
                                 new DockPanel
                                 {
                                     Items =
