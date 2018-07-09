@@ -49,7 +49,7 @@ namespace Pong
         }
         #endregion
 
-        public void Draw(SpriteBatch spriteBatch, Color color, float width)
+        public void Draw(SpriteBatch spriteBatch, Color color, float width,float rmult=1f)
         {
             if (plain ==null) {
                 plain = new Texture2D(spriteBatch.GraphicsDevice, 1, 1);
@@ -62,7 +62,7 @@ namespace Pong
 
             Tuple<double, double> pol = MathHelper.ToPol(Xr, Yr);
 
-            spriteBatch.Draw(plain, new Rectangle((int)Math.Round(X1,MidpointRounding.AwayFromZero), (int)Math.Round(Y1, MidpointRounding.AwayFromZero), (int)Math.Round(pol.Item2, MidpointRounding.AwayFromZero), (int)Math.Round(width, MidpointRounding.AwayFromZero)),
+            spriteBatch.Draw(plain, new Rectangle((int)Math.Round(X1,MidpointRounding.AwayFromZero), (int)Math.Round(Y1, MidpointRounding.AwayFromZero), (int)Math.Round(pol.Item2*rmult, MidpointRounding.AwayFromZero), (int)Math.Round(width, MidpointRounding.AwayFromZero)),
                 null,
                 color,
                 (float)pol.Item1,

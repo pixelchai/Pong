@@ -34,13 +34,15 @@ namespace Pong
         private float aiyvel = -1f;
 
         private List<Tuple<Vector2, Vector2>> ailines = new List<Tuple<Vector2, Vector2>>();
+        private List<Vector2> trail = new List<Vector2>();
+        private bool jointrails = true;
 
         private bool drawTraj = true;
         private bool bothAI = true;
 
         private bool allowDrag = true;
         private bool angleRandomisation = false;
-
+        private int trailno = 0;
         private Vector2 ballpos;
         private Vector2 ballvel = Vector2.Zero;
         private float ballspeed = 1f;
@@ -112,6 +114,7 @@ namespace Pong
             Button okaybutton;
             Button exitbutton;
             NumericalBar speedbar;
+            NumericalBar trailbar;
             Label warninglabel;
             _gui.ActiveScreen = new Screen
             {
@@ -142,7 +145,7 @@ namespace Pong
                         },
                         new StackPanel
                         {
-                            Spacing = 5,
+                            Spacing = 0,
                             BackgroundColor = Color.DimGray,
                             Items =
                             {
@@ -204,6 +207,23 @@ namespace Pong
                                         })
                                     }
                                 },
+                                new DockPanel
+                                {
+                                    Items =
+                                    {
+                                        new Label("Ball trail (experimental): ")
+                                        {
+                                            AttachedProperties ={{DockPanel.DockProperty, Dock.Left}}
+                                        },
+                                        (trailbar=new NumericalBar()
+                                        {
+                                            LBound=0f,
+                                            UBound=100f,
+                                            DecimalPlaces=0,
+                                            Value=0f
+                                        })
+                                    }
+                                },
                                 (warninglabel=new Label("NB: AI performance may be reduced with the current options")
                                 {
                                     TextColor = Color.Transparent,
@@ -227,12 +247,15 @@ namespace Pong
             };
             okaybutton.Clicked += (object sender, EventArgs e) =>
             {
+                trail.Clear();
+
                 this.bothAI = !c_usercontrol.IsChecked;
                 this.drawTraj = c_traj.IsChecked;
                 this.allowDrag = c_drag.IsChecked;
                 base.Window.AllowUserResizing = c_resize.IsChecked;
                 base.IsMouseVisible = c_cursor.IsChecked;
                 this.angleRandomisation = c_anglerand.IsChecked;
+                this.trailno = (int)trailbar.Value;
 
                 this.ballspeed = speedbar.Value;
                 if (ballvel == Vector2.Zero)
@@ -541,9 +564,32 @@ namespace Pong
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
 
+            if (trailno > 0)
+            {
+                
+                if (ballspeed < 2)
+                {
+                    foreach (Vector2 pos in trail)
+                    {
+                        spriteBatch.Draw(plain, new Rectangle((int)pos.X, (int)pos.Y, balld, balld), Color.DarkGray);
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i + 1 < trail.Count; i += 1)
+                    {
+                        new RectSprite(plain, trail[i].X+balld/2f, trail[i].Y+balld/2f, trail[i + 1].X + balld / 2f, trail[i+1].Y + balld / 2f).Draw(spriteBatch, Color.DarkGray, balld, 1.2f);
+                    }
+                }
+                trail.Add(ballpos);
+                if (trail.Count > trailno)
+                {
+                    trail.RemoveAt(0);
+                }
+            }
+
             spriteBatch.Draw(plain, new Rectangle(0, (int)othery, paddlew, paddleh), Color.White);
             spriteBatch.Draw(plain, new Rectangle(GraphicsDevice.Viewport.Width-paddlew, (int)usery, paddlew, paddleh), Color.White);
-            spriteBatch.Draw(plain, new Rectangle((int)ballpos.X, (int)ballpos.Y, balld, balld),Color.White);
             string scoretext = "" + othersc + " : " + usersc;
             Vector2 scoretextd = font.MeasureString(scoretext);
             spriteBatch.DrawString(font, scoretext, new Vector2((GraphicsDevice.Viewport.Width/2)-(scoretextd.X/2),10), Color.White);
@@ -557,6 +603,7 @@ namespace Pong
                 }
             }
 
+            spriteBatch.Draw(plain, new Rectangle((int)ballpos.X, (int)ballpos.Y, balld, balld), Color.White);
             spriteBatch.End();
 
             //gui
